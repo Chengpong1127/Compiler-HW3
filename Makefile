@@ -22,7 +22,7 @@ lex.yy.c: mylex.l
 y.tab.c: myyacc.y symbol.cpp JavaGenerator.cpp
 	bison -d myyacc.y
 
-y.tab.h: myyacc.y
+y.tab.h: myyacc.y symbol.cpp JavaGenerator.cpp
 	yacc -d myyacc.y 
 symbol.o: symbol.cpp
 	$(CC) -c -g symbol.cpp

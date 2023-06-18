@@ -25,6 +25,7 @@ class JavaGenerater{
         }
         return tab;
     }
+    bool hasMain = false;
 public:
     JavaGenerater(string filename, SymbolTableManager& symbolTableManager){
         file.open(filename);
@@ -38,11 +39,23 @@ public:
 
     void ProgramInit(){
         file << GetTab() << "class output" << endl;
-        file << GetTab() << "{" << endl;
+        StartScope();
     }
 
-    void MainClassDeclaration(string name){
-        FunctionDeclaration(name, "void", vector<string>());
+    void ProgramEnd(){
+        if(!hasMain){
+            MainClassDeclaration();
+            Return();
+            EndScope();
+        }
+        EndScope();
+    }
+
+    void MainClassDeclaration(){
+        hasMain = true;
+        auto args = vector<string>();
+        args.push_back("java.lang.String[]");
+        FunctionDeclaration("main", "void", args);
     }
 
     void VarDeclaration(string name, int type){
@@ -90,9 +103,18 @@ public:
         file << ")" << endl;
         file << GetTab() << "max_stack 15" << endl;
         file << GetTab() << "max_locals 15" << endl;
-        file << "{" << endl; 
+        StartScope();
+    }
+    void StartScope(){
+        file << GetTab() << "{" << endl;
+        symbolTableManager.createSymbolTable();
     }
     void EndScope(){
-        file << "}" << endl;
+        symbolTableManager.destroySymbolTable();
+        file << GetTab() << "}" << endl;
+    }
+
+    void Return(){
+        file << GetTab() << "return" << endl;
     }
 };

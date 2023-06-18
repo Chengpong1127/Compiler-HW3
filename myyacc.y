@@ -326,12 +326,11 @@ int main(int argc, char **argv)
         exit(1);
     }
     yyin = fopen(argv[1], "r");         /* open input file */
-    generator.ProgramInit();
+    generator.ProgramInit(); 
 
-    symbolTableManager.createSymbolTable(); // 建立全域的SymbolTable
-    /* perform parsing */
     auto result = yyparse();
 
+    generator.ProgramEnd();
     if (result == 1)                 /* parsing */
         cout<<"Parsing failed!"<<endl;
     else
