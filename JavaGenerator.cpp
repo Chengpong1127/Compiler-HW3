@@ -16,7 +16,8 @@ class JavaGenerater{
     ofstream file;
     map<int, string> INT2TYPE;
     SymbolTableManager symbolTableManager;
-
+    SymbolTable GlobalSymbolTable;
+    string className;
     string GetTab(){
         int tabNumber = symbolTableManager.GetScopeNumber();
         string tab = "";
@@ -43,12 +44,51 @@ class JavaGenerater{
         {LT, "if_icmplt"},
         {GT, "if_icmpgt"},
         {LE, "if_icmple"},
-
-
     };
+    
+    void AddGlobalVar(string name, int type){
+        GlobalSymbolTable.addSymbol(name, type, 0);
+        file << GetTab() << "field static " << INT2TYPE[type] << " " << name << endl;
+    }
+
+    void AddGlobalVar(string name, int type, string value){
+        GlobalSymbolTable.addSymbol(name, type, 0);
+        file << GetTab() << "field static " << INT2TYPE[type] << " " << name << " = " << value << endl;
+    }
+
+    void GetGlobalVar(string name){
+        file << GetTab() << "getstatic " << INT2TYPE[GlobalSymbolTable.getSymbolType(name)] << " " << className << "." << name << endl;
+    }
+
+    void PutGlobalVar(string name){
+        file << GetTab() << "putstatic " << INT2TYPE[GlobalSymbolTable.getSymbolType(name)] << " " << className << "." << name << endl;
+    }
+
+    void AddLocalVar(string name, int type){
+        symbolTableManager.addSymbol(name, type);
+        file << GetTab() << "istore " << symbolTableManager.getSymbolIndex(name) << endl;
+    }
+
+    void GetLocalVar(string name){
+        file << GetTab() << "iload " << symbolTableManager.getSymbolIndex(name) << endl;
+    }
+
+    void PutLocalVar(string name){
+        file << GetTab() << "iload " << symbolTableManager.getSymbolIndex(name) << endl;
+    }
+    void StartScope(){
+        file << GetTab() << "{" << endl;
+        symbolTableManager.createSymbolTable();
+    }
+    void EndScope(){
+        symbolTableManager.destroySymbolTable();
+        file << GetTab() << "}" << endl;
+    }
+
 public:
     JavaGenerater(string filename, SymbolTableManager& symbolTableManager){
-        file.open(filename);
+        className = filename;
+        file.open(filename + ".jasm");
         INT2TYPE[INT] = "int";
         INT2TYPE[REAL] = "float";
         INT2TYPE[BOOL] = "boolean";
@@ -57,8 +97,16 @@ public:
         this->symbolTableManager = symbolTableManager; 
     }
 
+    int GetSymbolType(string name){
+        if(symbolTableManager.containsSymbol(name)){
+            return symbolTableManager.getSymbolType(name);
+        }else{
+            return GlobalSymbolTable.getSymbolType(name);
+        }
+    }
+
     void ProgramInit(){
-        file << GetTab() << "class output" << endl;
+        file << GetTab() << "class " << className << endl;
         StartScope();
     }
 
@@ -77,21 +125,38 @@ public:
     }
 
     void VarDeclaration(string name, int type){
-        symbolTableManager.addSymbol(name, type);
+        if(hasMain){
+            AddLocalVar(name, type);
+        }else{
+            AddGlobalVar(name, type);
+        }
+    }
+
+
+
+    void LoadIdentifier(string name){
+        if(symbolTableManager.containsSymbol(name)){
+            GetLocalVar(name);
+        }else{
+            GetGlobalVar(name);
+        }
+    }
+
+    void PutIdentifier(string name){
+        checkMain();
+        if(symbolTableManager.containsSymbol(name)){
+            PutLocalVar(name);
+        }else{
+            PutGlobalVar(name);
+        }
     }
 
 
     void Push(string value){
+        checkMain();
         file << GetTab() << "ldc " << value << endl;
     }
 
-    void AssignLocal(string name){
-        file << GetTab() << "istore " << symbolTableManager.getSymbolIndex(name) << endl;
-    }
-
-    void LoadLocal(string name){
-        file << GetTab() << "iload " << symbolTableManager.getSymbolIndex(name) << endl;
-    }
 
     void PutInit(){
         checkMain();
@@ -120,16 +185,15 @@ public:
         file << GetTab() << "max_locals 15" << endl;
         StartScope();
     }
-    void StartScope(){
-        file << GetTab() << "{" << endl;
-        symbolTableManager.createSymbolTable();
-    }
-    void EndScope(){
-        symbolTableManager.destroySymbolTable();
-        file << GetTab() << "}" << endl;
-    }
+    
+    
 
     void Return(){
+        checkMain();
         file << GetTab() << "return" << endl;
+    }
+
+    SymbolTable& GetGlobalSymbolTable(){
+        return GlobalSymbolTable;
     }
 };

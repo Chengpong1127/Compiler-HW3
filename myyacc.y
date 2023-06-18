@@ -25,6 +25,8 @@ extern "C"
 extern FILE *yyin;
 // 建立SymbolTableManager
 SymbolTableManager symbolTableManager = SymbolTableManager();
+auto generator = JavaGenerater("output", symbolTableManager);
+SymbolTable GlobalSymbolTable = generator.GetGlobalSymbolTable();
 // 建立FunctionTable，用來存放Function的parameters
 vector<int> FunctionTable = vector<int>();
 int FunctionTableIndex = 0;
@@ -34,6 +36,9 @@ int FunctionTableIndex = 0;
 int checkIdentifierExist(string name){
     if(symbolTableManager.containsSymbol(name)){
         return symbolTableManager.getSymbolType(name);
+    }
+    else if(generator.GetGlobalSymbolTable().containsSymbol(name)){
+        return generator.GetGlobalSymbolTable().getSymbolType(name);
     }
     else{
         printWarning("Identifier " + name + " does not exist");
@@ -48,7 +53,7 @@ void checkSymbolIsEditable(string name){
     }
 }
 
-auto generator = JavaGenerater("output.jasm", symbolTableManager);
+
 
 %}
 
@@ -67,7 +72,7 @@ auto generator = JavaGenerater("output.jasm", symbolTableManager);
 %token <type> BOOL CHAR INT REAL STRING ARRAY 
 %left <type> PLUS MINUS TIMES DIV AND OR 
 %token <type> MOD EQ NE LT LE GT GE NOT
-%type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression LeftValue ConstIdentifierSetType
+%type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression ConstIdentifierSetType
 
 %start Program
 %%
@@ -212,7 +217,11 @@ ConstantDeclaration:// 常數宣告，宣告後會將型態存入SymbolTable中
                     checkAssignAvaliable($2, $3);}
                 ;
 VariableDeclaration:// 變數宣告，宣告後會將型態存入SymbolTable中
-                VAR IDENTIFIER AssignExpression {symbolTableManager.addSymbol($2, $3);}
+                VAR IDENTIFIER AssignExpression 
+                {   
+                    generator.VarDeclaration($2, $3);
+                    generator.PutIdentifier($2);
+                }
                 | VAR IDENTIFIER SetType 
                 {
                     generator.VarDeclaration($2, $3);
@@ -220,17 +229,17 @@ VariableDeclaration:// 變數宣告，宣告後會將型態存入SymbolTable中
                 | VAR IDENTIFIER SetType AssignExpression 
                 {
                     generator.VarDeclaration($2, $3);
-                    generator.AssignLocal($2);
+                    generator.PutIdentifier($2);
                 }
                 ;
 AssignmentStatement:// 賦值，將右邊的值賦予左邊的變數。會檢查左邊的變數是否存在於SymbolTable中，並檢查賦值的型態是否相同或是相容
-                LeftValue AssignExpression 
+                IDENTIFIER AssignExpression 
                     {
-                        checkAssignAvaliable($1, $2);
+                        checkIdentifierExist($1);
+                        checkSymbolIsEditable($1);
+                        checkAssignAvaliable(checkIdentifierExist($1), $2);
+                        generator.PutIdentifier($1);
                     }
-                ;
-LeftValue:      // 用來檢查左邊的變數是否存在於SymbolTable中
-                IDENTIFIER { $$ = checkIdentifierExist($1); checkSymbolIsEditable($1);}
                 ;
 AssignExpression:
                 ASSIGN OrExpression         {
@@ -280,7 +289,7 @@ Factor:         MINUS Factor                { $$ = checkUnaryOperation($1, $2);}
                 | IDENTIFIER                
                 { 
                     $$ = checkIdentifierExist($1);
-                    generator.LoadLocal($1);
+                    generator.LoadIdentifier($1);
                 }
                 | NUMERICALCONSTANT         
                 { 

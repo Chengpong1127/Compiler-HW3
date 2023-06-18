@@ -91,7 +91,6 @@ public:
 class SymbolTableManager{
 private:
     stack<SymbolTable*> *SymbolTableStack = new stack<SymbolTable*>(); //儲存符號表的堆疊
-    SymbolTable GlobalSymbolTable; //全域符號表
     int index = 0; //用來記錄目前的index是多少
 public:
     int GetScopeNumber(){
@@ -115,9 +114,6 @@ public:
     void addSymbol(string name, int type, bool isConsistent = false) {
         SymbolTable* topSymbolTable = SymbolTableStack->top();
         topSymbolTable->addSymbol(name, type, index++, isConsistent);
-    }
-    void addGlobalSymbol(string name, int type, bool isConsistent = false) {
-        GlobalSymbolTable.addSymbol(name, type, 0, isConsistent);
     }
 
     const bool checkSymbolLocal(string name){
