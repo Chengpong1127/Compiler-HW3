@@ -253,12 +253,27 @@ CompareExpression:
                                             { $$ = checkTypeOperation($1, $2, $3);}
                 ;
 Expression:     Term                        { $$ = $1;}
-                | Expression PLUS Term      { $$ = checkTypeOperation($1, $2, $3);}
-                | Expression MINUS Term     { $$ = checkTypeOperation($1, $2, $3);}
+                | Expression PLUS Term      { 
+                    $$ = checkTypeOperation($1, $2, $3);
+                    generator.Operator($2);
+                }
+                | Expression MINUS Term     { 
+                    $$ = checkTypeOperation($1, $2, $3);
+                    generator.Operator($2);
+                }
 Term:           Factor
-                | Term TIMES Factor         { $$ = checkTypeOperation($1, $2, $3);}
-                | Term DIV Factor           { $$ = checkTypeOperation($1, $2, $3);}
-                | Term MOD Factor           { $$ = checkTypeOperation($1, $2, $3);}  
+                | Term TIMES Factor         { 
+                    $$ = checkTypeOperation($1, $2, $3);
+                    generator.Operator($2);
+                }
+                | Term DIV Factor           { 
+                    $$ = checkTypeOperation($1, $2, $3);
+                    generator.Operator($2);
+                }
+                | Term MOD Factor           { 
+                    $$ = checkTypeOperation($1, $2, $3);
+                    generator.Operator($2);
+                }  
                 ;
 Factor:         MINUS Factor                { $$ = checkUnaryOperation($1, $2);}
                 | LPAREN OrExpression RPAREN    { $$ = $2;}

@@ -31,6 +31,21 @@ class JavaGenerater{
             MainClassDeclaration();
         }
     }
+    map<int, string> INT2OP = {
+        {PLUS, "iadd"},
+        {MINUS, "isub"},
+        {TIMES, "imul"},
+        {DIV, "idiv"},
+        {MOD, "irem"},
+        {AND, "iand"},
+        {OR, "ior"},
+        {NOT, "ineg"},
+        {LT, "if_icmplt"},
+        {GT, "if_icmpgt"},
+        {LE, "if_icmple"},
+
+
+    };
 public:
     JavaGenerater(string filename, SymbolTableManager& symbolTableManager){
         file.open(filename);
@@ -88,15 +103,8 @@ public:
     }
 
 
-    void Add(){
-        file << GetTab() << "iadd" << endl;
-    }
-    void Sub(){
-        file << GetTab() << "isub" << endl;
-    }
-
-    void Mul(){
-        file << GetTab() << "imul" << endl;
+    void Operator(int op){
+        file << GetTab() << INT2OP[op] << endl;
     }
 
     void FunctionDeclaration(string name, string returnType, vector<string> args){

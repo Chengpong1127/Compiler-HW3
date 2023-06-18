@@ -31,4 +31,4 @@ clean:
 	rm -f myparser.out lex.yy.c *.tab.c *.tab.h *.o
 
 test: test/test1.st
-	./myparser.out test/test1.st && ./javaa/javaa output.txt
+	./myparser.out test/test1.st && ./javaa/javaa output.jasm && java output
