@@ -142,8 +142,11 @@ ForStatement:   // For Statement，包含一般increasing的和decreasing
                 StatementList
                 END FOR {symbolTableManager.destroySymbolTable();}
                 ;
-PUTStatement:   PUT OrExpression{
-                    generator.Put(STRING);
+PUTStatement:   PUT {
+                    generator.PutInit();
+                }
+                OrExpression{
+                    generator.PutEnd($3);
                 }
                 ;
 GETStatement:   GET IDENTIFIER {checkIdentifierExist($2);} // 將輸入的值存入IDENTIFIER中

@@ -26,6 +26,11 @@ class JavaGenerater{
         return tab;
     }
     bool hasMain = false;
+    void checkMain(){
+        if(!hasMain){
+            MainClassDeclaration();
+        }
+    }
 public:
     JavaGenerater(string filename, SymbolTableManager& symbolTableManager){
         file.open(filename);
@@ -43,11 +48,9 @@ public:
     }
 
     void ProgramEnd(){
-        if(!hasMain){
-            MainClassDeclaration();
-            Return();
-            EndScope();
-        }
+        checkMain();
+        Return();
+        EndScope();
         EndScope();
     }
 
@@ -75,8 +78,12 @@ public:
         file << GetTab() << "iload " << symbolTableManager.getSymbolIndex(name) << endl;
     }
 
-    void Put(int type){
+    void PutInit(){
+        checkMain();
         file << GetTab() << "getstatic java.io.PrintStream java.lang.System.out" << endl;
+    }
+
+    void PutEnd(int type){
         file << GetTab() << "invokevirtual void java.io.PrintStream.print(" << INT2TYPE[type] << ")" << endl;
     }
 
