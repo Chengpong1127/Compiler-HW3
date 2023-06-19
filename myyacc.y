@@ -272,15 +272,25 @@ AssignExpression:
 OrExpression:   // 這是Expression 的最高層，包含OrExpression, AndExpression, CompareExpression, Expression, Term, Factor，用來處理運算子的優先順序。每一層都會檢查型態是否相同或是相容，並回傳型態
                 AndExpression               { $$ = $1;}
                 | OrExpression OR AndExpression
-                                            { $$ = checkTypeOperation($1, $2, $3);}
+                                            { 
+                                                $$ = checkTypeOperation($1, $2, $3);
+                                                generator.Operator($2);
+                                            }
                 ;
 AndExpression:  CompareExpression           { $$ = $1;}
                 | AndExpression AND CompareExpression
-                                            { $$ = checkTypeOperation($1, $2, $3);}
+                                            { 
+                                                $$ = checkTypeOperation($1, $2, $3);
+                                                generator.Operator($2);
+                                            }
                 ;
 CompareExpression:
                 Expression                  { $$ = $1;}
-                | NOT CompareExpression     { $$ = checkUnaryOperation($1, $2);}
+                | NOT CompareExpression     { 
+                    $$ = checkUnaryOperation($1, $2);
+                    generator.Command("iconst_1");
+                    generator.Operator($1);
+                }
                 | CompareExpression CompareOperater Expression
                                             { 
                                                 $$ = checkTypeOperation($1, $2, $3);
@@ -310,7 +320,10 @@ Term:           Factor
                     generator.Operator($2);
                 }  
                 ;
-Factor:         MINUS Factor                { $$ = checkUnaryOperation($1, $2);}
+Factor:         MINUS Factor                { 
+                    $$ = checkUnaryOperation($1, $2);
+                    generator.Command("ineg");
+                }
                 | LPAREN OrExpression RPAREN    { $$ = $2;}
                 | IDENTIFIER                
                 { 

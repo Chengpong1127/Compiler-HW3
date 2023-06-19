@@ -26,7 +26,7 @@ class JavaGenerater{
     const string LOOPEXIT = "loopexit";
     const string LOOPTRUE = "looptrue";
     const string LOOPFALSE = "loopfalse";
-
+    int ClabelNumber = 0;
     string GetTab(){
         int tabNumber = symbolTableManager.GetScopeNumber();
         string tab = "";
@@ -55,7 +55,7 @@ class JavaGenerater{
         {MOD, "irem"},
         {AND, "iand"},
         {OR, "ior"},
-        {NOT, "ineg"},
+        {NOT, "ixor"},
         {GT, "ifgt"},
         {LT, "iflt"},
         {GE, "ifge"},
@@ -251,12 +251,13 @@ public:
         const string CTRUE = "true";
         const string CFALSE = "false";
         Command("isub");
-        Command(INT2OP[op] + " " + GetLabelWithScope(CTRUE));
+        Command(INT2OP[op] + " " + GetLabelWithScope(CTRUE, ClabelNumber));
         Command("iconst_0");
-        GOTOStatement(GetLabelWithScope(CFALSE));
-        LabelStatement(GetLabelWithScope(CTRUE));
+        GOTOStatement(GetLabelWithScope(CFALSE, ClabelNumber));
+        LabelStatement(GetLabelWithScope(CTRUE, ClabelNumber));
         Command("iconst_1");
-        LabelStatement(GetLabelWithScope(CFALSE));
+        LabelStatement(GetLabelWithScope(CFALSE, ClabelNumber));
+        ClabelNumber++;
     }
 
     void FunctionDeclaration(string name, string returnType, vector<string> args){
