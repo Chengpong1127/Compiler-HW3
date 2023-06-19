@@ -37,6 +37,7 @@ class JavaGenerater{
         }
         return tab;
     }
+    bool global = true;
     bool hasMain = false;
     bool inFunction = false;
     void checkMain(){
@@ -72,7 +73,6 @@ class JavaGenerater{
         GlobalSymbolTable.addSymbol(name, type, 0);
         file << GetTab() << "field static " << INT2TYPE[type] << " " << name << endl;
     }
-
     void AddGlobalVar(string name, int type, string value){
         GlobalSymbolTable.addSymbol(name, type, 0);
         file << GetTab() << "field static " << INT2TYPE[type] << " " << name << " = " << value << endl;
@@ -88,6 +88,10 @@ class JavaGenerater{
 
     void AddLocalVar(string name, int type){
         symbolTableManager.addSymbol(name, type);
+    }
+    void AddLocalVar(string name, int type, string value){
+        symbolTableManager.addSymbol(name, type);
+        PutLocalVar(name);
     }
 
     void GetLocalVar(string name){
@@ -119,6 +123,11 @@ class JavaGenerater{
     string GetLabelWithScope(string label, int scope){
         return label + to_string(scope);
     }
+    void GetConstValue(string name){
+        checkMain();
+        int type = symbolTableManager.getSymbolType(name);
+        Push(symbolTableManager.GetStrVal(name));
+    }
 
 public:
     JavaGenerater(string filename, SymbolTableManager& symbolTableManager){
@@ -149,6 +158,7 @@ public:
     }
 
     void MainClassDeclaration(){
+        global = false;
         hasMain = true;
         auto args = vector<string>();
         args.push_back("java.lang.String[]");
@@ -156,16 +166,32 @@ public:
     }
 
     void VarDeclaration(string name, int type){
-        if(hasMain){
-            AddLocalVar(name, type);
-        }else{
+        if(global){
             AddGlobalVar(name, type);
+        }else{
+            checkMain();
+            AddLocalVar(name, type);
         }
+    }
+    void VarDeclaration(string name, int type, string value){
+        if(global){
+            AddGlobalVar(name, type, value);
+        }else{
+            checkMain();
+            AddLocalVar(name, type);
+            PutLocalVar(name);
+        }
+    }
+    void ConstDeclaration(string name, int type, string value){
+        symbolTableManager.addSymbol(name, type, true, value);
     }
 
 
-
     void LoadIdentifier(string name){
+        if(symbolTableManager.getSymbolIsConsistent(name)){
+            GetConstValue(name);
+            return;
+        }
         if(symbolTableManager.containsSymbol(name)){
             GetLocalVar(name);
         }else{
@@ -183,9 +209,14 @@ public:
     }
 
 
+
+    
+
     void Push(string value){
-        checkMain();
         file << GetTab() << "ldc " << value << endl;
+    }
+    void Push(int value){
+        file << GetTab() << "ldc " << to_string(value) << endl;
     }
 
     void IFInit(){
@@ -294,6 +325,7 @@ public:
     }
 
     void FunctionDeclaration(string name, string returnType, vector<string> args){
+        global = false;
         file << GetTab() << "method public static " << returnType << " " << name << "(";
         for(int i = 0; i < args.size(); i++){
             file << args[i];
@@ -374,6 +406,7 @@ public:
         return GlobalSymbolTable;
     }
     void WriteCode(string code){
+        return;
         file << "/* ";
         for(auto c : code){
             if(c == '\n'){

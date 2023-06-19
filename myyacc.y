@@ -65,16 +65,28 @@ void checkSymbolIsEditable(string name){
 %token _BEGIN CONST DECREASING DEFAULT DO ELSE END EXIT FALSE VOID
 %token FOR FUNCTION GET IF LOOP OF PUT PROCEDURE RESULT RETURN SKIP THEN TRUE VAR WHEN ASSIGN
 %token <sval> IDENTIFIER NUMERICALCONSTANT STRINGCONSTANT
-%token <type> BOOL CHAR INT REAL STRING ARRAY
+%token <type> BOOL CHAR INT REAL STRING ARRAY 
 %left <type> PLUS MINUS TIMES DIV AND OR 
 %token <type> MOD EQ NE LT LE GT GE NOT
-%type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression ConstIdentifierSetType
+%type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression ConstIdentifierSetType 
 
 %start Program
 %%
 Program:        // 程式的進入點
-                StatementList
+                GlobalVariableDeclarationList
+                FunctionDeclarationList
+                MainBlock
                 ;
+GlobalVariableDeclarationList:
+                GlobalVariableDeclaration
+                | GlobalVariableDeclarationList GlobalVariableDeclaration
+FunctionDeclarationList:
+                FunctionDeclaration
+                | FunctionDeclarationList FunctionDeclaration
+                ;
+MainBlock:      StatementList
+                ;
+
 StatementList:  // 將所有的statement組合起來
                 GeneralStatement
                 | StatementList GeneralStatement
@@ -84,16 +96,14 @@ UniqueSymbolTableStatementList:
                 StatementList
                 {symbolTableManager.destroySymbolTable();}
 
-GeneralStatement:// 一般的statement，包含FunctionDeclaration
-                DeclareStatement  
+GeneralStatement:// 一般的statement，包含FunctionDeclaration  
                 | FunctionCall      
                 | StructStatement
                 | SimpleStatement  
-                |
+                | VariableDeclaration
                 ; 
 DeclareStatement: ConstantDeclaration
                 | VariableDeclaration
-                | FunctionDeclaration
                 ;
 FunctionStatement:// 一般的statement，不包含FunctionDeclaration，因為Function 中不允許再宣告Function
                 ConstantDeclaration
@@ -231,12 +241,15 @@ FunctionDeclaration:// Function Declaration，包含Function和Procedure
                         checkIdentifierSame($2, $10);// 比對Function的名稱和END的名稱是否相同
                         generator.FunctionEnd();
                     }
+                |
                 ;
 
 
 
 ConstantDeclaration:// 常數宣告，宣告後會將型態存入SymbolTable中
-                CONST IDENTIFIER AssignExpression {symbolTableManager.addSymbol($2, $3, true);}
+                CONST IDENTIFIER AssignExpression {
+
+                }
                 | CONST ConstIdentifierSetType AssignExpression { 
                     checkAssignAvaliable($2, $3);}
                 ;
@@ -255,7 +268,23 @@ VariableDeclaration:// 變數宣告，宣告後會將型態存入SymbolTable中
                     generator.VarDeclaration($2, $3);
                     generator.PutIdentifier($2);
                 }
+                |
                 ;
+GlobalVariableDeclaration:
+                VAR IDENTIFIER OptionalSetType ASSIGN NUMERICALCONSTANT {
+                    generator.VarDeclaration($2, INT, $5);
+                } 
+                | VAR IDENTIFIER SetType 
+                {
+                    generator.VarDeclaration($2, $3);
+                }
+                |
+                ;
+OptionalSetType: // 用來處理SetType的Optional
+                SetType
+                |
+                ;
+
 AssignmentStatement:// 賦值，將右邊的值賦予左邊的變數。會檢查左邊的變數是否存在於SymbolTable中，並檢查賦值的型態是否相同或是相容
                 IDENTIFIER AssignExpression 
                     {

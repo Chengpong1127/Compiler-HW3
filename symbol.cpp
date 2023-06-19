@@ -19,6 +19,8 @@ struct SymbolType{
     int returnType;
     bool isConsistent;
     int index;
+
+    string sval;
 };
 
 
@@ -28,10 +30,11 @@ private:
     map<string, SymbolType> symbolMap; //儲存符號的map
 public:
     //新增變數符號
-    void addSymbol(string name, int type, int index, bool isConsistent = false){
+    void addSymbol(string name, int type, int index, bool isConsistent = false, string sval = ""){
         symbolMap[name].type = type;
         symbolMap[name].isConsistent = isConsistent;
         symbolMap[name].index = index;
+        symbolMap[name].sval = sval;
     }
     //新增函式符號
     void addFunctionSymbol(string name, int type, vector<int> parameterMap, int returnType, bool isConsistent = false){
@@ -85,6 +88,9 @@ public:
     const int getSymbolCount(){
         return symbolMap.size();
     }
+    const string GetStrVal(string name){
+        return symbolMap[name].sval;
+    }
 };
 
 //符號表管理員
@@ -111,9 +117,9 @@ public:
 
     }
     //在堆疊最上面的符號表新增一個變數符號
-    void addSymbol(string name, int type, bool isConsistent = false) {
+    void addSymbol(string name, int type, bool isConsistent = false, string sval = "") {
         SymbolTable* topSymbolTable = SymbolTableStack->top();
-        topSymbolTable->addSymbol(name, type, index++, isConsistent);
+        topSymbolTable->addSymbol(name, type, index++, isConsistent, sval);
     }
 
     const bool checkSymbolLocal(string name){
@@ -214,6 +220,21 @@ public:
         }
         return vector<int>();
         
+    }
+
+    const string GetStrVal(string name){
+        auto tempStack = *SymbolTableStack;
+        while(!tempStack.empty()){
+            auto table = tempStack.top();
+            if(table->containsSymbol(name)){
+                return table->GetStrVal(name);
+            }
+            else{
+                tempStack.pop();
+            }
+            
+        }
+        return "";
     }
     //檢查函式存在於堆疊中的最靠近頂端的符號表中是否有指定index的參數
     const bool containsFunctionParameter(string name, int parameter_number){
