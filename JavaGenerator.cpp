@@ -228,6 +228,30 @@ public:
         checkMain();
         file << GetTab() << "ifgt " << GetLabelWithScope(LOOPEXIT, loopStack.top()) << endl;
     }
+
+    void ForInit(string name, string from, string to, bool increase = true){
+        checkMain();
+        symbolTableManager.createSymbolTable();
+        VarDeclaration(name, INT);
+        Push(from);
+        PutIdentifier(name);
+        LoopInit();
+
+        LoadIdentifier(name);
+        Push(to);
+        CompareOperator(increase? GT: LT);
+        ExitLoopWhen();
+        
+    }
+    void ForEnd(string name, bool increase = true){
+        checkMain();
+        LoadIdentifier(name);
+        Push("1");
+        Operator(increase? PLUS: MINUS);
+        PutIdentifier(name);
+        LoopEnd();
+        symbolTableManager.destroySymbolTable();
+    }
     
     void Command(string command){
         checkMain();
@@ -274,7 +298,11 @@ public:
         StartScope();
     }
     
-    
+    void Skip(){
+        checkMain();
+        Command("getstatic java.io.PrintStream java.lang.System.out");
+        Command("invokevirtual void java.io.PrintStream.println()");
+    }
 
     void Return(){
         checkMain();

@@ -120,7 +120,7 @@ SimpleStatement: // 單一的statement，如put, get, result, return, exit, skip
                 | ResultStatement
                 | RETURN
                 | ExitStatement
-                | SKIP
+                | SKIP { generator.Skip(); }
 
 ConditionStatement:// if, if-else
                 IF OrExpression THEN {
@@ -154,14 +154,20 @@ LoopStatement:  // Loop Statement
                 }
                 ;
 ForStatement:   // For Statement，包含一般increasing的和decreasing
-                FOR {symbolTableManager.createSymbolTable();}
-                IDENTIFIER COLON OrExpression DOT DOT OrExpression {symbolTableManager.addSymbol($3, INT); checkTypeSame($5, INT); checkTypeSame($8, INT);}// 將IDENTIFIER加入SymbolTable中，並檢查OrExpression的type是否為INT
-                StatementList
-                END FOR {symbolTableManager.destroySymbolTable();}
-                | FOR {symbolTableManager.createSymbolTable();}
-                DECREASING IDENTIFIER COLON OrExpression DOT DOT OrExpression {symbolTableManager.addSymbol($4, INT); checkTypeSame($6, INT); checkTypeSame($9, INT);}
-                StatementList
-                END FOR {symbolTableManager.destroySymbolTable();}
+                FOR IDENTIFIER COLON NUMERICALCONSTANT DOT DOT NUMERICALCONSTANT {
+                    generator.ForInit($2, $4, $7);
+                }// 將IDENTIFIER加入SymbolTable中，並檢查OrExpression的type是否為INT
+                StatementList END FOR {
+                    generator.ForEnd($2);
+                }
+
+
+                | FOR DECREASING IDENTIFIER COLON NUMERICALCONSTANT DOT DOT NUMERICALCONSTANT {
+                    generator.ForInit($3, $5, $8, false);
+                }// 將IDENTIFIER加入SymbolTable中，並檢查OrExpression的type是否為INT
+                StatementList END FOR {
+                    generator.ForEnd($3, false);
+                }
                 ;
 PUTStatement:   PUT {
                     generator.PutInit();
