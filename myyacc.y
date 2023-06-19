@@ -404,9 +404,9 @@ Type:           INT {$$ = INT;}
 SetType:        COLON Type {$$ = $2;}
                 ;
 
-Block:          _BEGIN                      
-                    UniqueSymbolTableStatementList 
-                    END                     
+Block:          _BEGIN {generator.BlockInit();}               
+                    StatementList 
+                    END {generator.BlockEnd();}             
                 ;  
 CompareOperater:
                 EQ {$$ = $1;}

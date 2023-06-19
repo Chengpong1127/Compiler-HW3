@@ -380,6 +380,14 @@ public:
         }
         file << ")" << endl;
     }
+    void BlockInit(){
+        checkMain();
+        symbolTableManager.createSymbolTable();
+    }
+    void BlockEnd(){
+        checkMain();
+        symbolTableManager.destroySymbolTable();
+    }
 
     void Return(){
         checkMain();
