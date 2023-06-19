@@ -6,6 +6,7 @@
 #include <map>
 #include "symbol.cpp"
 #include <stack>
+#include <vector>
 using namespace std;
 
 extern int linenum;
@@ -27,6 +28,7 @@ class JavaGenerater{
     const string LOOPTRUE = "looptrue";
     const string LOOPFALSE = "loopfalse";
     int ClabelNumber = 0;
+    vector<int> functionTable;
     string GetTab(){
         int tabNumber = symbolTableManager.GetScopeNumber();
         string tab = "";
@@ -36,8 +38,9 @@ class JavaGenerater{
         return tab;
     }
     bool hasMain = false;
+    bool inFunction = false;
     void checkMain(){
-        if(!hasMain){
+        if(!hasMain && !inFunction){
             MainClassDeclaration();
         }
     }
@@ -46,6 +49,7 @@ class JavaGenerater{
         {REAL, "float"},
         {BOOL, "boolean"},
         {STRING, "java.lang.String"},
+        {VOID, "void"},
     };
     map<int, string> INT2OP = {
         {PLUS, "iadd"},
@@ -283,6 +287,11 @@ public:
         LabelStatement(GetLabelWithScope(CFALSE, ClabelNumber));
         ClabelNumber++;
     }
+    void Skip(){
+        checkMain();
+        Command("getstatic java.io.PrintStream java.lang.System.out");
+        Command("invokevirtual void java.io.PrintStream.println()");
+    }
 
     void FunctionDeclaration(string name, string returnType, vector<string> args){
         file << GetTab() << "method public static " << returnType << " " << name << "(";
@@ -298,15 +307,67 @@ public:
         StartScope();
     }
     
-    void Skip(){
+    void AddParameter(string name, int type){
+        functionTable.push_back(type);
+        AddLocalVar(name, type);
+    }
+    void FunctionInit(){
+        inFunction = true;
+        symbolTableManager.createSymbolTable();
+        functionTable.clear();
+    }
+
+    void FunctionCreate(string name, int type, int returnType){
+        auto argsString = vector<string>();
+        for(auto arg : functionTable){
+            argsString.push_back(INT2TYPE[arg]);
+        }
+        FunctionDeclaration(name, INT2TYPE[returnType], argsString);
+        GlobalSymbolTable.addFunctionSymbol(name, FUNCTION, functionTable, returnType);
+    }
+    void FunctionEnd(){
+        Return();
+        EndScope();
+        inFunction = false;
+        symbolTableManager.destroySymbolTable();
+    }
+        
+    void FunctionCall(string name){
         checkMain();
-        Command("getstatic java.io.PrintStream java.lang.System.out");
-        Command("invokevirtual void java.io.PrintStream.println()");
+        auto ps = GlobalSymbolTable.getFunctionParameters(name);
+        auto returnType = GlobalSymbolTable.getFunctionReturnType(name);
+        file << GetTab() << "invokestatic " << INT2TYPE[returnType] << " " << className << "." << name << "(";
+        
+        for(int i = 0; i < ps.size(); i++){
+            file << INT2TYPE[ps[i]];
+            if(i != ps.size() - 1){
+                file << ", ";
+            }
+        }
+        file << ")" << endl;
     }
 
     void Return(){
         checkMain();
         file << GetTab() << "return" << endl;
+    }
+    void Result(int type){
+        checkMain();
+        switch (type)
+        {
+        case INT:
+            Command("ireturn");
+            break;
+        case REAL:
+            Command("freturn");
+            break;
+        case BOOL:
+            Command("ireturn");
+            break;
+        
+        default:
+            break;
+        }
     }
 
     SymbolTable& GetGlobalSymbolTable(){

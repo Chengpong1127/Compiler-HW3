@@ -27,9 +27,6 @@ extern FILE *yyin;
 SymbolTableManager symbolTableManager = SymbolTableManager();
 auto generator = JavaGenerater("output", symbolTableManager);
 SymbolTable GlobalSymbolTable = generator.GetGlobalSymbolTable();
-// 建立FunctionTable，用來存放Function的parameters
-vector<int> FunctionTable = vector<int>();
-int FunctionTableIndex = 0;
 
 
 // 檢查輸入的Identifier是否存在於SymbolTable中。如果存在，回傳其type，否則報錯。
@@ -64,11 +61,11 @@ void checkSymbolIsEditable(string name){
     char* sval;
 }
 
-%token DOT COMMA COLON SEMICOLON LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
-%token _BEGIN CONST DECREASING DEFAULT DO ELSE END EXIT FALSE
+%token DOT COMMA COLON SEMICOLON LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE 
+%token _BEGIN CONST DECREASING DEFAULT DO ELSE END EXIT FALSE VOID
 %token FOR FUNCTION GET IF LOOP OF PUT PROCEDURE RESULT RETURN SKIP THEN TRUE VAR WHEN ASSIGN
 %token <sval> IDENTIFIER NUMERICALCONSTANT STRINGCONSTANT
-%token <type> BOOL CHAR INT REAL STRING ARRAY 
+%token <type> BOOL CHAR INT REAL STRING ARRAY
 %left <type> PLUS MINUS TIMES DIV AND OR 
 %token <type> MOD EQ NE LT LE GT GE NOT
 %type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression ConstIdentifierSetType
@@ -118,7 +115,7 @@ SimpleStatement: // 單一的statement，如put, get, result, return, exit, skip
                 | PUTStatement
                 | GETStatement
                 | ResultStatement
-                | RETURN
+                | RETURN { generator.Return(); }
                 | ExitStatement
                 | SKIP { generator.Skip(); }
 
@@ -190,52 +187,50 @@ ExitStatement:  EXIT {
                 ;
 
 FunctionCall:   // FunctionCall Statement，
-                IDENTIFIER { FunctionTable.clear(); }
+                IDENTIFIER
                 LPAREN ValueList RPAREN 
                 {
                     checkIdentifierExist($1);// 檢查IDENTIFIER是否存在於SymbolTable中
-                    auto table = symbolTableManager.getFunctionParameters($1);// 取得IDENTIFIER的parameters
-                    checkParameterSame(table, FunctionTable); // 檢查valueList是否和記錄的parameters相同
-                    FunctionTable.clear();// 清空FunctionTable，讓下一次使用時不會有上一次的資料
-                    $$ = symbolTableManager.getFunctionReturnType($1);// 回傳Function call return的type
+                    generator.FunctionCall($1);
+                    $$ = generator.GetGlobalSymbolTable().getFunctionReturnType($1);// 回傳Function call return的type
                 }
                 ;
 ValueList:      // 這是用來將FunctionCall中的參數存入FunctionTable中
-                OrExpression { FunctionTable.insert(FunctionTable.begin(),1,$1); }
-                | OrExpression COMMA ValueList { FunctionTable.insert(FunctionTable.begin(),1,$1); }
+                OrExpression
+                | OrExpression COMMA ValueList
                 |
                 ;
 ResultStatement:
-                RESULT OrExpression
+                RESULT OrExpression{
+                    generator.Result($2);
+                }
                 ;
 FunctionDeclaration:// Function Declaration，包含Function和Procedure
                 FUNCTION IDENTIFIER  {
-                    symbolTableManager.createSymbolTable();// 建立新的SymbolTable
-                    FunctionTable.clear();// 清空FunctionTable
+                    generator.FunctionInit();
                     }
-                    LPAREN ParameterList RPAREN 
-                    SetType 
+                    LPAREN ParameterList RPAREN SetType {
+                        generator.FunctionCreate($2, FUNCTION, $7);
+                    }
                     FunctionStatementList 
                     END IDENTIFIER          
                     {
-                        symbolTableManager.destroySymbolTable();// 刪除函數宣告的SymbolTable
-                        checkIdentifierSame($2, $10);// 比對Function的名稱和END的名稱是否相同
-                        symbolTableManager.addFunctionSymbol($2, FUNCTION, FunctionTable, $7);// 將Function的資訊存入SymbolTable中
-                        FunctionTable.clear();// 清空FunctionTable，讓下一次使用時不會有上一次的資料
+                        checkIdentifierSame($2, $11);// 比對Function的名稱和END的名稱是否相同
+                        generator.FunctionEnd();
                     }
 
-                | PROCEDURE IDENTIFIER      {
-                    symbolTableManager.createSymbolTable();
-                    FunctionTable.clear();
+                | PROCEDURE IDENTIFIER  {
+                    generator.FunctionInit();
                     }
-                    LPAREN ParameterList RPAREN 
+                    LPAREN ParameterList RPAREN {
+                        generator.FunctionCreate($2, PROCEDURE, VOID);
+                    }
                     FunctionStatementList 
-                    END IDENTIFIER          {
-                        symbolTableManager.destroySymbolTable(); 
-                        checkIdentifierSame($2, $9);
-                        symbolTableManager.addFunctionSymbol($2, PROCEDURE, FunctionTable, -1);
-                        FunctionTable.clear();
-                        }
+                    END IDENTIFIER          
+                    {
+                        checkIdentifierSame($2, $10);// 比對Function的名稱和END的名稱是否相同
+                        generator.FunctionEnd();
+                    }
                 ;
 
 
@@ -353,18 +348,23 @@ Factor:         MINUS Factor                {
                     $$ = BOOL;
                     generator.Command("iconst_0");
                 }
-                | FunctionCall              { $$ = $1;}
+                | FunctionCall              { 
+                    $$ = $1;
+                }
                 ;
 ParameterList:  FunctionParameterSetType
                 | ParameterList COMMA FunctionParameterSetType
                 | 
                 ;
 ConstIdentifierSetType:
-                IDENTIFIER SetType {symbolTableManager.addSymbol($1, $2, true); $$ = $2;
+                IDENTIFIER SetType {
+                    symbolTableManager.addSymbol($1, $2, true); $$ = $2;
                 }
                 ;
 FunctionParameterSetType:
-                IDENTIFIER SetType {FunctionTable.push_back($2); symbolTableManager.addSymbol($1, $2);}
+                IDENTIFIER SetType {
+                    generator.AddParameter($1, $2);
+                }
                 
                 ;
 Type:           INT {$$ = INT;}
