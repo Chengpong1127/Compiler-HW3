@@ -581,7 +581,8 @@ char *yytext;
 #define token(s, t) {LIST;if(DEBUG) printf("<%s>\n",s);return t;}
 #define tokenNumericalConstants(t, number, token) {LIST;if(DEBUG) printf("<%s:%s>\n",t,number);return token;}
 #define tokenString(t, s, token) {LIST;if(DEBUG) printf("<%s:%s>\n",t,s); return token;}
-
+#include "JavaGenerator.cpp"
+#include <string>
 
 #define MAX_LINE_LENG 256
 extern "C"
@@ -590,10 +591,12 @@ extern "C"
     int yylex(void);
 }
 extern int linenum;
+extern JavaGenerater generator;
 char buf[MAX_LINE_LENG];
 void newLine() {
     LIST;
-    //printf("%d: %s", linenum++, buf);
+    string line = to_string(linenum) + ":" + buf;
+    generator.WriteCode(line);
     linenum++;
     buf[0] = '\0';
 }
@@ -606,9 +609,9 @@ char* removeQuote(char* str) {
     str[strlen(str) - 1] = '\0';
     return result;
 }
-#line 610 "lex.yy.c"
+#line 613 "lex.yy.c"
 
-#line 612 "lex.yy.c"
+#line 615 "lex.yy.c"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -826,10 +829,10 @@ YY_DECL
 		}
 
 	{
-#line 41 "mylex.l"
+#line 44 "mylex.l"
 
 
-#line 833 "lex.yy.c"
+#line 836 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -888,334 +891,334 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 43 "mylex.l"
+#line 46 "mylex.l"
 { LIST; BEGIN(COMMENT); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 44 "mylex.l"
+#line 47 "mylex.l"
 { LIST; BEGIN(INITIAL); }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 45 "mylex.l"
+#line 48 "mylex.l"
 { newLine();}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 46 "mylex.l"
+#line 49 "mylex.l"
 { LIST;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 50 "mylex.l"
+#line 53 "mylex.l"
 {LIST;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 51 "mylex.l"
+#line 54 "mylex.l"
 {tokenString("StringConstants", removeQuote(yytext), STRINGCONSTANT);} 
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 53 "mylex.l"
+#line 56 "mylex.l"
 {token(".", DOT);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 54 "mylex.l"
+#line 57 "mylex.l"
 {token(",", COMMA);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 55 "mylex.l"
+#line 58 "mylex.l"
 {token(":", COLON);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 56 "mylex.l"
+#line 59 "mylex.l"
 {token(";", SEMICOLON);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 57 "mylex.l"
+#line 60 "mylex.l"
 {token("(", LPAREN);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 58 "mylex.l"
+#line 61 "mylex.l"
 {token(")", RPAREN);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 59 "mylex.l"
+#line 62 "mylex.l"
 {token("[", LBRACKET);}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 60 "mylex.l"
+#line 63 "mylex.l"
 {token("]", RBRACKET);}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 61 "mylex.l"
+#line 64 "mylex.l"
 {token("{", LBRACE);}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 62 "mylex.l"
+#line 65 "mylex.l"
 {token("}", RBRACE);}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 63 "mylex.l"
+#line 66 "mylex.l"
 {yylval.type=PLUS; token("+", PLUS);}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 64 "mylex.l"
+#line 67 "mylex.l"
 {yylval.type=MINUS; token("-", MINUS);}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 65 "mylex.l"
+#line 68 "mylex.l"
 {yylval.type=TIMES; token("*", TIMES);}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 66 "mylex.l"
+#line 69 "mylex.l"
 {yylval.type=DIV; token("/", DIV);}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 67 "mylex.l"
+#line 70 "mylex.l"
 {yylval.type=MOD; token("mod", MOD);}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 68 "mylex.l"
+#line 71 "mylex.l"
 {token(":=", ASSIGN);}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 69 "mylex.l"
+#line 72 "mylex.l"
 {yylval.type=LT; token("<", LT);}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 70 "mylex.l"
+#line 73 "mylex.l"
 {yylval.type=LE; token("<=", LE);}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 71 "mylex.l"
+#line 74 "mylex.l"
 {yylval.type=GE; token(">=", GE);}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 72 "mylex.l"
+#line 75 "mylex.l"
 {yylval.type=GT; token(">", GT);}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 73 "mylex.l"
+#line 76 "mylex.l"
 {yylval.type=EQ; token("=", EQ);}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 74 "mylex.l"
+#line 77 "mylex.l"
 {yylval.type=NE; token("not=", NE);}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 75 "mylex.l"
+#line 78 "mylex.l"
 {yylval.type=AND; token("and", AND);}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 76 "mylex.l"
+#line 79 "mylex.l"
 {yylval.type=OR; token("or", OR);}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 77 "mylex.l"
+#line 80 "mylex.l"
 {yylval.type=NOT; token("not", NOT);}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 78 "mylex.l"
+#line 81 "mylex.l"
 {yylval.sval=strdup(yytext); tokenNumericalConstants("NumericalConstants", yytext, NUMERICALCONSTANT); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 82 "mylex.l"
+#line 85 "mylex.l"
 {token("BEGIN", _BEGIN);}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 83 "mylex.l"
+#line 86 "mylex.l"
 {token("CHAR", CHAR);}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 84 "mylex.l"
+#line 87 "mylex.l"
 {token("CONST", CONST);}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 85 "mylex.l"
+#line 88 "mylex.l"
 {token("DECREASING", DECREASING);}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 86 "mylex.l"
+#line 89 "mylex.l"
 {token("DEFAULT", DEFAULT);}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 87 "mylex.l"
+#line 90 "mylex.l"
 {token("DO", DO);}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 88 "mylex.l"
+#line 91 "mylex.l"
 {token("ELSE", ELSE);}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 89 "mylex.l"
+#line 92 "mylex.l"
 {token("END", END);}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 90 "mylex.l"
+#line 93 "mylex.l"
 {token("EXIT", EXIT);}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 91 "mylex.l"
+#line 94 "mylex.l"
 {token("FALSE", FALSE);}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 92 "mylex.l"
+#line 95 "mylex.l"
 {token("FOR", FOR);}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 93 "mylex.l"
+#line 96 "mylex.l"
 {token("FUNCTION", FUNCTION);}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 94 "mylex.l"
+#line 97 "mylex.l"
 {token("GET", GET);}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 95 "mylex.l"
+#line 98 "mylex.l"
 {token("IF", IF);}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 96 "mylex.l"
+#line 99 "mylex.l"
 {token("LOOP", LOOP);}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 97 "mylex.l"
+#line 100 "mylex.l"
 {token("OF", OF);}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 98 "mylex.l"
+#line 101 "mylex.l"
 {token("PUT", PUT);}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 99 "mylex.l"
+#line 102 "mylex.l"
 {token("PROCEDURE", PROCEDURE);}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 100 "mylex.l"
+#line 103 "mylex.l"
 {token("RESULT", RESULT);}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 101 "mylex.l"
+#line 104 "mylex.l"
 {token("RETURN", RETURN);}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 102 "mylex.l"
+#line 105 "mylex.l"
 {token("SKIP", SKIP);}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 103 "mylex.l"
+#line 106 "mylex.l"
 {token("THEN", THEN);}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 104 "mylex.l"
+#line 107 "mylex.l"
 {token("TRUE", TRUE);}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 105 "mylex.l"
+#line 108 "mylex.l"
 {token("VAR", VAR);}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 106 "mylex.l"
+#line 109 "mylex.l"
 {token("WHEN", WHEN);}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 108 "mylex.l"
+#line 111 "mylex.l"
 {token("BOOL", BOOL);}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 109 "mylex.l"
+#line 112 "mylex.l"
 {token("INT", INT);}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 110 "mylex.l"
+#line 113 "mylex.l"
 {token("REAL", REAL);}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 111 "mylex.l"
+#line 114 "mylex.l"
 {token("STRING", STRING);}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 112 "mylex.l"
+#line 115 "mylex.l"
 {token("ARRAY", ARRAY);}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 114 "mylex.l"
+#line 117 "mylex.l"
 {yylval.sval=strdup(yytext); tokenString("IDENTIFIER", yytext, IDENTIFIER);}
 	YY_BREAK
 case 64:
 /* rule 64 can match eol */
 YY_RULE_SETUP
-#line 115 "mylex.l"
+#line 118 "mylex.l"
 {newLine();}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 117 "mylex.l"
+#line 120 "mylex.l"
 {LIST;}
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 119 "mylex.l"
+#line 122 "mylex.l"
 {
         LIST;
         printf("%d:%s\n", linenum+1, buf);
@@ -1225,10 +1228,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 125 "mylex.l"
+#line 128 "mylex.l"
 ECHO;
 	YY_BREAK
-#line 1232 "lex.yy.c"
+#line 1235 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
 	yyterminate();
@@ -2234,7 +2237,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 125 "mylex.l"
+#line 128 "mylex.l"
 
 int yywrap(void)
 {

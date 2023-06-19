@@ -6,7 +6,8 @@
 #define token(s, t) {LIST;if(DEBUG) printf("<%s>\n",s);return t;}
 #define tokenNumericalConstants(t, number, token) {LIST;if(DEBUG) printf("<%s:%s>\n",t,number);return token;}
 #define tokenString(t, s, token) {LIST;if(DEBUG) printf("<%s:%s>\n",t,s); return token;}
-
+#include "JavaGenerator.cpp"
+#include <string>
 
 #define MAX_LINE_LENG 256
 extern "C"
@@ -15,10 +16,12 @@ extern "C"
     int yylex(void);
 }
 extern int linenum;
+extern JavaGenerater generator;
 char buf[MAX_LINE_LENG];
 void newLine() {
     LIST;
-    //printf("%d: %s", linenum++, buf);
+    string line = to_string(linenum) + ":" + buf;
+    generator.WriteCode(line);
     linenum++;
     buf[0] = '\0';
 }

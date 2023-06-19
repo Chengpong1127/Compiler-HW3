@@ -18,6 +18,12 @@ class JavaGenerater{
     SymbolTableManager symbolTableManager;
     SymbolTable GlobalSymbolTable;
     string className;
+    const string IFEXIT = "ifexit";
+    const string IFELSE = "ifelse";
+    const string LOOPSTART = "loopstart";
+    const string LOOPEXIT = "loopexit";
+    const string LOOPTRUE = "looptrue";
+    const string LOOPFALSE = "loopfalse";
     string GetTab(){
         int tabNumber = symbolTableManager.GetScopeNumber();
         string tab = "";
@@ -170,24 +176,40 @@ public:
 
     void IFInit(){
         checkMain();
-        file << GetTab() << "ifeq " << GetLabelWithScope("Lfalse") << endl;
+        file << GetTab() << "ifeq " << GetLabelWithScope(IFELSE) << endl;
         symbolTableManager.createSymbolTable();
     }
     void GOTOExit(){
         checkMain();
-        GOTOStatement(GetLabelWithScope("Lexit"));
+        GOTOStatement(GetLabelWithScope(IFEXIT));
     }
     void IFElse(){
         checkMain();
         symbolTableManager.destroySymbolTable();
         GOTOExit();
-        LabelStatement(GetLabelWithScope("Lfalse"));
+        LabelStatement(GetLabelWithScope(IFELSE));
         symbolTableManager.createSymbolTable();
     }
     void IFEnd(){
         symbolTableManager.destroySymbolTable();
         checkMain();
-        LabelStatement(GetLabelWithScope("Lexit"));
+        LabelStatement(GetLabelWithScope(IFEXIT));
+    }
+
+    void LoopInit(){
+        checkMain();
+        LabelStatement(GetLabelWithScope(LOOPSTART));
+        // symbolTableManager.createSymbolTable();
+    }
+    void LoopEnd(){
+        checkMain();
+        // symbolTableManager.destroySymbolTable();
+        GOTOStatement(GetLabelWithScope(LOOPSTART));
+        LabelStatement(GetLabelWithScope(LOOPEXIT));
+    }
+    void ExitLoop(){
+        checkMain();
+        GOTOStatement(GetLabelWithScope(LOOPEXIT));
     }
     
     void Command(string command){
@@ -232,5 +254,15 @@ public:
 
     SymbolTable& GetGlobalSymbolTable(){
         return GlobalSymbolTable;
+    }
+    void WriteCode(string code){
+        file << "/* ";
+        for(auto c : code){
+            if(c == '\n'){
+            }else{
+                file << c;
+            }
+        }
+        file << " */" << endl;
     }
 };

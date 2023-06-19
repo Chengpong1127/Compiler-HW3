@@ -146,9 +146,13 @@ ElseStatement:  ELSE {
                 ;
 
 LoopStatement:  // Loop Statement
-                LOOP 
-                UniqueSymbolTableStatementList 
-                END LOOP 
+                LOOP {
+                    generator.LoopInit();
+                }
+                StatementList 
+                END LOOP {
+                    generator.LoopEnd();
+                }
                 ;
 ForStatement:   // For Statement，包含一般increasing的和decreasing
                 FOR {symbolTableManager.createSymbolTable();}
