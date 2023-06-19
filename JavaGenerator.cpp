@@ -85,6 +85,17 @@ class JavaGenerater{
         file << GetTab() << "}" << endl;
     }
 
+    void LabelStatement(string label){
+        file << GetTab() << label << ":" << endl;
+        Command("nop");
+    }
+    void GOTOStatement(string label){
+        file << GetTab() << "goto " << label << endl;
+    }
+    string GetLabelWithScope(string label){
+        return label + to_string(symbolTableManager.GetScopeNumber());
+    }
+
 public:
     JavaGenerater(string filename, SymbolTableManager& symbolTableManager){
         className = filename;
@@ -157,6 +168,32 @@ public:
         file << GetTab() << "ldc " << value << endl;
     }
 
+    void IFInit(){
+        checkMain();
+        file << GetTab() << "ifeq " << GetLabelWithScope("Lfalse") << endl;
+        symbolTableManager.createSymbolTable();
+    }
+    void GOTOExit(){
+        checkMain();
+        GOTOStatement(GetLabelWithScope("Lexit"));
+    }
+    void IFElse(){
+        checkMain();
+        symbolTableManager.destroySymbolTable();
+        GOTOExit();
+        LabelStatement(GetLabelWithScope("Lfalse"));
+        symbolTableManager.createSymbolTable();
+    }
+    void IFEnd(){
+        symbolTableManager.destroySymbolTable();
+        checkMain();
+        LabelStatement(GetLabelWithScope("Lexit"));
+    }
+    
+    void Command(string command){
+        checkMain();
+        file << GetTab() << command << endl;
+    }
 
     void PutInit(){
         checkMain();

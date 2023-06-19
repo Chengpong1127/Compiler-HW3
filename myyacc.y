@@ -124,12 +124,25 @@ SimpleStatement: // 單一的statement，如put, get, result, return, exit, skip
                 | SKIP
 
 ConditionStatement:// if, if-else
-                IF OrExpression THEN
-                UniqueSymbolTableStatementList END IF
-                {checkTypeSame($2, BOOL);}
-                | IF OrExpression THEN
-                UniqueSymbolTableStatementList ELSE UniqueSymbolTableStatementList END IF 
-                {checkTypeSame($2, BOOL);}
+                IF OrExpression THEN {
+                    checkTypeSame($2, BOOL);
+                    generator.IFInit();
+                }
+                
+                StatementList
+                ElseStatement  
+                {
+                    generator.IFEnd();
+                }
+                ;
+ElseStatement:  ELSE {
+                    generator.IFElse();
+                }
+                StatementList END IF
+                | END {
+                    generator.IFElse();
+                }
+                IF
                 ;
 
 LoopStatement:  // Loop Statement
@@ -297,8 +310,14 @@ Factor:         MINUS Factor                { $$ = checkUnaryOperation($1, $2);}
                     generator.Push($1);
                 }
                 | STRINGCONSTANT            { $$ = STRING;}
-                | TRUE                      { $$ = BOOL;}
-                | FALSE                     { $$ = BOOL;}
+                | TRUE                      { 
+                    $$ = BOOL;
+                    generator.Command("iconst_1");
+                }
+                | FALSE                     { 
+                    $$ = BOOL;
+                    generator.Command("iconst_0");
+                }
                 | FunctionCall              { $$ = $1;}
                 ;
 ParameterList:  FunctionParameterSetType
