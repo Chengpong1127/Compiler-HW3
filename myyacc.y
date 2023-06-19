@@ -67,8 +67,7 @@ void checkSymbolIsEditable(string name){
 %token DOT COMMA COLON SEMICOLON LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token _BEGIN CONST DECREASING DEFAULT DO ELSE END EXIT FALSE
 %token FOR FUNCTION GET IF LOOP OF PUT PROCEDURE RESULT RETURN SKIP THEN TRUE VAR WHEN ASSIGN
-%token STRINGCONSTANT  
-%token <sval> IDENTIFIER NUMERICALCONSTANT
+%token <sval> IDENTIFIER NUMERICALCONSTANT STRINGCONSTANT
 %token <type> BOOL CHAR INT REAL STRING ARRAY 
 %left <type> PLUS MINUS TIMES DIV AND OR 
 %token <type> MOD EQ NE LT LE GT GE NOT
@@ -173,8 +172,15 @@ PUTStatement:   PUT {
                 ;
 GETStatement:   GET IDENTIFIER {checkIdentifierExist($2);} // 將輸入的值存入IDENTIFIER中
                 ;
-ExitStatement:  EXIT // 結束程式
-                | EXIT WHEN OrExpression {checkTypeSame($3, BOOL);}
+ExitStatement:  EXIT {
+                    generator.ExitLoop();
+                }
+                ;
+                | EXIT WHEN OrExpression 
+                {
+                    checkTypeSame($3, BOOL);
+                    generator.ExitLoopWhen();
+                }
                 ;
 
 FunctionCall:   // FunctionCall Statement，
@@ -276,7 +282,10 @@ CompareExpression:
                 Expression                  { $$ = $1;}
                 | NOT CompareExpression     { $$ = checkUnaryOperation($1, $2);}
                 | CompareExpression CompareOperater Expression
-                                            { $$ = checkTypeOperation($1, $2, $3);}
+                                            { 
+                                                $$ = checkTypeOperation($1, $2, $3);
+                                                generator.CompareOperator($2);
+                                            }
                 ;
 Expression:     Term                        { $$ = $1;}
                 | Expression PLUS Term      { 
@@ -313,7 +322,10 @@ Factor:         MINUS Factor                { $$ = checkUnaryOperation($1, $2);}
                     $$ = checkIntOrReal($1);
                     generator.Push($1);
                 }
-                | STRINGCONSTANT            { $$ = STRING;}
+                | STRINGCONSTANT            { 
+                    $$ = STRING;
+                    generator.Push($1);
+                }
                 | TRUE                      { 
                     $$ = BOOL;
                     generator.Command("iconst_1");

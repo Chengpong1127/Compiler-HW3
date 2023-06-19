@@ -51,7 +51,7 @@ identifier {letter}({letter}|{digit}|_)*
 
 
 %[^\n]* {LIST;}
-\"([^\"\n])*\" {tokenString("StringConstants", removeQuote(yytext), STRINGCONSTANT);} 
+\"([^\"\n])*\" {yylval.sval = yytext; tokenString("StringConstants", removeQuote(yytext), STRINGCONSTANT);} 
 
 "."     {token(".", DOT);}
 ","     {token(",", COMMA);}

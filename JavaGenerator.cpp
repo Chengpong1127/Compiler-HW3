@@ -5,6 +5,7 @@
 #include <fstream>
 #include <map>
 #include "symbol.cpp"
+#include <stack>
 using namespace std;
 
 extern int linenum;
@@ -14,16 +15,18 @@ extern FILE file;
 
 class JavaGenerater{
     ofstream file;
-    map<int, string> INT2TYPE;
+    
     SymbolTableManager symbolTableManager;
     SymbolTable GlobalSymbolTable;
     string className;
+    stack<int> loopStack;
     const string IFEXIT = "ifexit";
     const string IFELSE = "ifelse";
     const string LOOPSTART = "loopstart";
     const string LOOPEXIT = "loopexit";
     const string LOOPTRUE = "looptrue";
     const string LOOPFALSE = "loopfalse";
+
     string GetTab(){
         int tabNumber = symbolTableManager.GetScopeNumber();
         string tab = "";
@@ -38,6 +41,12 @@ class JavaGenerater{
             MainClassDeclaration();
         }
     }
+    map<int, string> INT2TYPE = {
+        {INT, "int"},
+        {REAL, "float"},
+        {BOOL, "boolean"},
+        {STRING, "java.lang.String"},
+    };
     map<int, string> INT2OP = {
         {PLUS, "iadd"},
         {MINUS, "isub"},
@@ -47,9 +56,10 @@ class JavaGenerater{
         {AND, "iand"},
         {OR, "ior"},
         {NOT, "ineg"},
-        {LT, "if_icmplt"},
-        {GT, "if_icmpgt"},
-        {LE, "if_icmple"},
+        {GT, "ifgt"},
+        {LT, "iflt"},
+        {GE, "ifge"},
+        {LE, "ifle"},
     };
     
     void AddGlobalVar(string name, int type){
@@ -100,15 +110,14 @@ class JavaGenerater{
     string GetLabelWithScope(string label){
         return label + to_string(symbolTableManager.GetScopeNumber());
     }
+    string GetLabelWithScope(string label, int scope){
+        return label + to_string(scope);
+    }
 
 public:
     JavaGenerater(string filename, SymbolTableManager& symbolTableManager){
         className = filename;
         file.open(filename + ".jasm");
-        INT2TYPE[INT] = "int";
-        INT2TYPE[REAL] = "float";
-        INT2TYPE[BOOL] = "boolean";
-        INT2TYPE[STRING] = "String";
 
         this->symbolTableManager = symbolTableManager; 
     }
@@ -198,17 +207,24 @@ public:
     void LoopInit(){
         checkMain();
         LabelStatement(GetLabelWithScope(LOOPSTART));
-        // symbolTableManager.createSymbolTable();
+        loopStack.push(symbolTableManager.GetScopeNumber());
+        symbolTableManager.createSymbolTable();
     }
     void LoopEnd(){
         checkMain();
-        // symbolTableManager.destroySymbolTable();
+        loopStack.pop();
+        symbolTableManager.destroySymbolTable();
         GOTOStatement(GetLabelWithScope(LOOPSTART));
         LabelStatement(GetLabelWithScope(LOOPEXIT));
     }
     void ExitLoop(){
         checkMain();
-        GOTOStatement(GetLabelWithScope(LOOPEXIT));
+        
+        GOTOStatement(GetLabelWithScope(LOOPEXIT, loopStack.top()));
+    }
+    void ExitLoopWhen(){
+        checkMain();
+        file << GetTab() << "ifgt " << GetLabelWithScope(LOOPEXIT, loopStack.top()) << endl;
     }
     
     void Command(string command){
@@ -228,6 +244,17 @@ public:
 
     void Operator(int op){
         file << GetTab() << INT2OP[op] << endl;
+    }
+    void CompareOperator(int op){
+        const string CTRUE = "true";
+        const string CFALSE = "false";
+        Command("isub");
+        Command(INT2OP[op] + " " + GetLabelWithScope(CTRUE));
+        Command("iconst_0");
+        GOTOStatement(GetLabelWithScope(CFALSE));
+        LabelStatement(GetLabelWithScope(CTRUE));
+        Command("iconst_1");
+        LabelStatement(GetLabelWithScope(CFALSE));
     }
 
     void FunctionDeclaration(string name, string returnType, vector<string> args){

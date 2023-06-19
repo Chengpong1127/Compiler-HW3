@@ -918,7 +918,7 @@ YY_RULE_SETUP
 case 6:
 YY_RULE_SETUP
 #line 54 "mylex.l"
-{tokenString("StringConstants", removeQuote(yytext), STRINGCONSTANT);} 
+{yylval.sval = yytext; tokenString("StringConstants", removeQuote(yytext), STRINGCONSTANT);} 
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
