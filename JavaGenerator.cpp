@@ -72,7 +72,6 @@ class JavaGenerater{
 
     void AddLocalVar(string name, int type){
         symbolTableManager.addSymbol(name, type);
-        file << GetTab() << "istore " << symbolTableManager.getSymbolIndex(name) << endl;
     }
 
     void GetLocalVar(string name){
@@ -80,7 +79,7 @@ class JavaGenerater{
     }
 
     void PutLocalVar(string name){
-        file << GetTab() << "iload " << symbolTableManager.getSymbolIndex(name) << endl;
+        file << GetTab() << "istore " << symbolTableManager.getSymbolIndex(name) << endl;
     }
     void StartScope(){
         file << GetTab() << "{" << endl;
