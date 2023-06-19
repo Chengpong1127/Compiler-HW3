@@ -60,6 +60,8 @@ class JavaGenerater{
         {LT, "iflt"},
         {GE, "ifge"},
         {LE, "ifle"},
+        {EQ, "ifeq"},
+        {NE, "ifne"},
     };
     
     void AddGlobalVar(string name, int type){
