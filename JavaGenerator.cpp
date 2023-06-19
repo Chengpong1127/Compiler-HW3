@@ -213,9 +213,11 @@ public:
     
 
     void Push(string value){
+        checkMain();
         file << GetTab() << "ldc " << value << endl;
     }
     void Push(int value){
+        checkMain();
         file << GetTab() << "ldc " << to_string(value) << endl;
     }
 
