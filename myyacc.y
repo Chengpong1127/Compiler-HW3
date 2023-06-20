@@ -68,18 +68,22 @@ void checkSymbolIsEditable(string name){
 %token <type> BOOL CHAR INT REAL STRING ARRAY 
 %left <type> PLUS MINUS TIMES DIV AND OR 
 %token <type> MOD EQ NE LT LE GT GE NOT
-%type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression ConstIdentifierSetType 
+%type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression 
 
 %start Program
 %%
 Program:        // 程式的進入點
-                GlobalVariableDeclarationList
+                GlobalDeclarationList
                 FunctionDeclarationList
                 MainBlock
                 ;
-GlobalVariableDeclarationList:
-                GlobalVariableDeclaration
-                | GlobalVariableDeclarationList GlobalVariableDeclaration
+GlobalDeclarationList:
+                GlobalDeclaration
+                | GlobalDeclarationList GlobalDeclaration
+GlobalDeclaration:
+                ConstantDeclaration
+                | GlobalVariableDeclaration
+                ;
 FunctionDeclarationList:
                 FunctionDeclaration
                 | FunctionDeclarationList FunctionDeclaration
@@ -247,11 +251,19 @@ FunctionDeclaration:// Function Declaration，包含Function和Procedure
 
 
 ConstantDeclaration:// 常數宣告，宣告後會將型態存入SymbolTable中
-                CONST IDENTIFIER AssignExpression {
-
+                CONST IDENTIFIER OptionalSetType ASSIGN NUMERICALCONSTANT { 
+                    generator.ConstDeclaration($2, INT, $5);
                 }
-                | CONST ConstIdentifierSetType AssignExpression { 
-                    checkAssignAvaliable($2, $3);}
+                | CONST IDENTIFIER OptionalSetType ASSIGN STRINGCONSTANT { 
+                    generator.ConstDeclaration($2, STRING, $5);
+                }
+                | CONST IDENTIFIER OptionalSetType ASSIGN TRUE { 
+                    generator.ConstDeclaration($2, BOOL, "1");
+                }
+                | CONST IDENTIFIER OptionalSetType ASSIGN FALSE { 
+                    generator.ConstDeclaration($2, BOOL, "0");
+                }
+
                 ;
 VariableDeclaration:// 變數宣告，宣告後會將型態存入SymbolTable中
                 VAR IDENTIFIER AssignExpression 
@@ -385,11 +397,7 @@ ParameterList:  FunctionParameterSetType
                 | ParameterList COMMA FunctionParameterSetType
                 | 
                 ;
-ConstIdentifierSetType:
-                IDENTIFIER SetType {
-                    symbolTableManager.addSymbol($1, $2, true); $$ = $2;
-                }
-                ;
+
 FunctionParameterSetType:
                 IDENTIFIER SetType {
                     generator.AddParameter($1, $2);
