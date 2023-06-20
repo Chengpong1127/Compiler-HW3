@@ -69,6 +69,7 @@ void checkSymbolIsEditable(string name){
 %left <type> PLUS MINUS TIMES DIV AND OR 
 %token <type> MOD EQ NE LT LE GT GE NOT
 %type <type> Type SetType Factor Term Expression AssignExpression FunctionCall CompareOperater CompareExpression AndExpression OrExpression 
+%type <sval> ForNumber
 
 %start Program
 %%
@@ -165,7 +166,7 @@ LoopStatement:  // Loop Statement
                 }
                 ;
 ForStatement:   // For Statement，包含一般increasing的和decreasing
-                FOR IDENTIFIER COLON NUMERICALCONSTANT DOT DOT NUMERICALCONSTANT {
+                FOR IDENTIFIER COLON ForNumber DOT DOT ForNumber {
                     generator.ForInit($2, $4, $7);
                 }// 將IDENTIFIER加入SymbolTable中，並檢查OrExpression的type是否為INT
                 StatementList END FOR {
@@ -173,12 +174,15 @@ ForStatement:   // For Statement，包含一般increasing的和decreasing
                 }
 
 
-                | FOR DECREASING IDENTIFIER COLON NUMERICALCONSTANT DOT DOT NUMERICALCONSTANT {
+                | FOR DECREASING IDENTIFIER COLON ForNumber DOT DOT ForNumber {
                     generator.ForInit($3, $5, $8, false);
                 }// 將IDENTIFIER加入SymbolTable中，並檢查OrExpression的type是否為INT
                 StatementList END FOR {
                     generator.ForEnd($3, false);
                 }
+                ;
+ForNumber:      NUMERICALCONSTANT { $$ = strdup($1); }
+                | IDENTIFIER { $$ = strdup(generator.GetConstValue($1).c_str()); }
                 ;
 PUTStatement:   PUT {
                     generator.PutInit();

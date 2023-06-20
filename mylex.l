@@ -20,7 +20,7 @@ extern JavaGenerater generator;
 char buf[MAX_LINE_LENG];
 void newLine() {
     LIST;
-    string line = to_string(linenum) + ":" + buf;
+    string line = to_string(linenum) + ": " + buf;
     generator.WriteCode(line);
     linenum++;
     buf[0] = '\0';

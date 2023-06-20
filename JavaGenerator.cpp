@@ -20,6 +20,7 @@ class JavaGenerater{
     SymbolTableManager symbolTableManager;
     SymbolTable GlobalSymbolTable;
     string className;
+    int loopID = 0;
     stack<int> loopStack;
     const string IFEXIT = "ifexit";
     const string IFELSE = "ifelse";
@@ -123,7 +124,13 @@ class JavaGenerater{
     string GetLabelWithScope(string label, int scope){
         return label + to_string(scope);
     }
-    void GetConstValue(string name){
+    string GetLabelWithScope(string label, int scope1, int scope2){
+        return label + to_string(scope1) + "_" + to_string(scope2);
+    }
+    string GetLabelNumber(int scope1, int scope2){
+        return to_string(scope1) + "_" + to_string(scope2);
+    }
+    void PushConstValue(string name){
         checkMain();
         int type = symbolTableManager.getSymbolType(name);
         Push(symbolTableManager.GetStrVal(name));
@@ -189,7 +196,7 @@ public:
 
     void LoadIdentifier(string name){
         if(symbolTableManager.getSymbolIsConsistent(name)){
-            GetConstValue(name);
+            PushConstValue(name);
             return;
         }
         if(symbolTableManager.containsSymbol(name)){
@@ -208,7 +215,9 @@ public:
         }
     }
 
-
+    string GetConstValue(string name){
+        return symbolTableManager.GetStrVal(name);
+    }
 
     
 
@@ -245,16 +254,17 @@ public:
 
     void LoopInit(){
         checkMain();
-        LabelStatement(GetLabelWithScope(LOOPSTART));
-        loopStack.push(symbolTableManager.GetScopeNumber());
+        loopID++;
+        loopStack.push(loopID);
+        LabelStatement(GetLabelWithScope(LOOPSTART, loopID));
         symbolTableManager.createSymbolTable();
     }
     void LoopEnd(){
         checkMain();
-        loopStack.pop();
         symbolTableManager.destroySymbolTable();
-        GOTOStatement(GetLabelWithScope(LOOPSTART));
-        LabelStatement(GetLabelWithScope(LOOPEXIT));
+        GOTOStatement(GetLabelWithScope(LOOPSTART, loopStack.top()));
+        LabelStatement(GetLabelWithScope(LOOPEXIT, loopStack.top()));
+        loopStack.pop();
     }
     void ExitLoop(){
         checkMain();
@@ -416,7 +426,6 @@ public:
         return GlobalSymbolTable;
     }
     void WriteCode(string code){
-        return;
         file << "/* ";
         for(auto c : code){
             if(c == '\n'){
