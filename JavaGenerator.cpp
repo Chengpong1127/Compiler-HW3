@@ -22,6 +22,8 @@ class JavaGenerater{
     string className;
     int loopID = 0;
     stack<int> loopStack;
+    int ifID = 0;
+    stack<int> ifStack;
     const string IFEXIT = "ifexit";
     const string IFELSE = "ifelse";
     const string LOOPSTART = "loopstart";
@@ -130,10 +132,13 @@ class JavaGenerater{
     string GetLabelNumber(int scope1, int scope2){
         return to_string(scope1) + "_" + to_string(scope2);
     }
-    void PushConstValue(string name){
+    void PushConstValue(string name, bool local = true){
         checkMain();
-        int type = symbolTableManager.getSymbolType(name);
-        Push(symbolTableManager.GetStrVal(name));
+        if(local){
+            Push(symbolTableManager.GetStrVal(name));
+        }else{
+            Push(GlobalSymbolTable.GetStrVal(name));
+        }
     }
 
 public:
@@ -190,19 +195,29 @@ public:
         }
     }
     void ConstDeclaration(string name, int type, string value){
-        symbolTableManager.addSymbol(name, type, true, value);
+        if(global){
+            GlobalSymbolTable.addSymbol(name, type,0 , true, value);
+        }else{
+            symbolTableManager.addSymbol(name, type, true, value);
+        }
+        
     }
 
 
     void LoadIdentifier(string name){
-        if(symbolTableManager.getSymbolIsConsistent(name)){
-            PushConstValue(name);
-            return;
-        }
+        checkMain();
         if(symbolTableManager.containsSymbol(name)){
-            GetLocalVar(name);
-        }else{
-            GetGlobalVar(name);
+            if(symbolTableManager.getSymbolIsConsistent(name)){
+                PushConstValue(name, true);
+            }else{
+                GetLocalVar(name);
+            }
+        }else if(GlobalSymbolTable.containsSymbol(name)){
+            if(GlobalSymbolTable.GetSymbolIsConsistent(name)){
+                PushConstValue(name, false);
+            }else{
+                GetGlobalVar(name);
+            }
         }
     }
 
@@ -216,7 +231,11 @@ public:
     }
 
     string GetConstValue(string name){
-        return symbolTableManager.GetStrVal(name);
+        if(symbolTableManager.containsSymbol(name)){
+            return symbolTableManager.GetStrVal(name);
+        }else{
+            return GlobalSymbolTable.GetStrVal(name);
+        }
     }
 
     
@@ -232,24 +251,27 @@ public:
 
     void IFInit(){
         checkMain();
-        file << GetTab() << "ifeq " << GetLabelWithScope(IFELSE) << endl;
+        ifID++;
+        ifStack.push(ifID);
+        file << GetTab() << "ifeq " << GetLabelWithScope(IFELSE, ifID) << endl;
         symbolTableManager.createSymbolTable();
     }
     void GOTOExit(){
         checkMain();
-        GOTOStatement(GetLabelWithScope(IFEXIT));
+        GOTOStatement(GetLabelWithScope(IFEXIT, ifStack.top()));
     }
     void IFElse(){
         checkMain();
         symbolTableManager.destroySymbolTable();
         GOTOExit();
-        LabelStatement(GetLabelWithScope(IFELSE));
+        LabelStatement(GetLabelWithScope(IFELSE, ifStack.top()));
         symbolTableManager.createSymbolTable();
     }
     void IFEnd(){
         symbolTableManager.destroySymbolTable();
         checkMain();
-        LabelStatement(GetLabelWithScope(IFEXIT));
+        LabelStatement(GetLabelWithScope(IFEXIT, ifStack.top()));
+        ifStack.pop();
     }
 
     void LoopInit(){
@@ -426,6 +448,7 @@ public:
         return GlobalSymbolTable;
     }
     void WriteCode(string code){
+        return;
         file << "/* ";
         for(auto c : code){
             if(c == '\n'){
