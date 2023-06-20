@@ -13,7 +13,6 @@ extern int linenum;
 extern FILE file;
 
 
-
 class JavaGenerater{
     ofstream file;
     
